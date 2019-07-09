@@ -1,0 +1,78 @@
+{
+    "LabelModelVersion": "2.0",
+    "Labels": [
+        {
+            "Confidence": 97.897216796875,
+            "Instances": [
+                {
+                    "BoundingBox": {
+                        "Height": 0.898931622505188,
+                        "Left": 0.22304779291152954,
+                        "Top": 0.09169480204582214,
+                        "Width": 0.30694580078125
+                    },
+                    "Confidence": 97.897216796875
+                },
+                {
+                    "BoundingBox": {
+                        "Height": 0.9697881937026978,
+                        "Left": 0.4621266722679138,
+                        "Top": 0.017284583300352097,
+                        "Width": 0.29534122347831726
+                    },
+                    "Confidence": 95.3521957397461
+                }
+            ],
+            "Name": "Person",
+            "Parents": []
+        },
+        {
+            "Confidence": 97.897216796875,
+            "Instances": [],
+            "Name": "Human",
+            "Parents": []
+        },
+        {
+            "Confidence": 97.25032043457031,
+            "Instances": [],
+            "Name": "Fashion",
+            "Parents": []
+        },
+        {
+            "Confidence": 95.62798309326172,
+            "Instances": [],
+            "Name": "Premiere",
+            "Parents": [
+                {
+                    "Name": "Fashion"
+                }
+            ]
+        },
+        {
+            "Confidence": 91.72898864746094,
+            "Instances": [],
+            "Name": "Red Carpet Premiere",
+            "Parents": [
+                {
+                    "Name": "Fashion"
+                },
+                {
+                    "Name": "Premiere"
+                }
+            ]
+        },
+        {
+            "Confidence": 91.72898864746094,
+            "Instances": [],
+            "Name": "Red Carpet",
+            "Parents": [
+                {
+                    "Name": "Fashion"
+                },
+                {
+                    "Name": "Premiere"
+                }
+            ]
+        }
+    ]
+}
