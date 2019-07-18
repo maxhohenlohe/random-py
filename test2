@@ -1,0 +1,128 @@
+import boto3
+from configparser import ConfigParser
+import base64
+import json
+import os
+import ssl
+import time
+import threading
+import http.client as httplib
+from gtts import gTTS
+import os
+
+parser = ConfigParser()
+parser.read('credentials.ini')
+
+photo = 'camera/FrontTrigger_003.jpg'
+#photo = 'c300.jpg'
+
+
+def process_aws(num):
+    """
+    function to print object detection
+    """
+
+people_detected = 'test'
+
+rds = boto3.setup_default_session(region_name='us-west-2')
+rds = boto3.client('rds')
+
+client = boto3.client('rekognition',
+                        aws_access_key_id=parser.get('default', 'access_key_id'),
+                        aws_secret_access_key=parser.get('default', 'secret_access_key'))
+with open(photo, 'rb') as source_image:
+    source_bytes = source_image.read()
+
+    # response = client.detect_faces(Image={'Bytes': source_bytes},
+    #                                Attributes=['ALL'])
+
+response = client.detect_labels(Image={'Bytes': source_bytes},
+                                    MaxLabels=10)
+
+objectdetails = response.get("Labels")
+
+
+for item in objectdetails:
+    if item['Name'] == "Person":
+        print("Person Detected")
+        people_detected = ("There are %s people in this picture" % (len(item['Instances'])))
+        print(people_detected)
+
+
+#        if item['Name'] == "Vehicle":
+#            print("Vehicle Detected")
+#            print("There are %s vehicles in this picture" % (len(item['Instances'])))
+
+def process_sighthound(num):
+    """
+    function to print vehicle info
+    """
+
+plate = ''
+vehicles_detected = ''
+
+sh_secret_access_key=parser.get('default', 'sh_access_key')
+
+headers = {"Content-type": "application/json",
+           "X-Access-Token": sh_secret_access_key}
+conn = httplib.HTTPSConnection("dev.sighthoundapi.com",
+       context=ssl.SSLContext(ssl.PROTOCOL_TLSv1))
+
+# To use a hosted image uncomment the following line and update the URL
+#image_data = "http://example.com/path/to/hosted/image.jpg"
+
+# To use a local file uncomment the following line and update the path
+image_data = base64.b64encode(open(photo, "rb").read()).decode()
+
+params = json.dumps({"image": image_data})
+#conn.request("POST", "/v1/detections?type=face,person&faceOption=landmark,gender", params, headers)
+conn.request("POST", "/v1/recognition?objectType=vehicle,licenseplate", params, headers)
+#response = conn.getresponse()
+#result = response.read()
+#print("Detection Results = " + str(result))
+
+response = conn.getresponse()
+results = json.loads(response.read())
+
+for obj in results["objects"]:
+    if obj["objectType"] == "vehicle":
+        make = obj["vehicleAnnotation"]["attributes"]["system"]["make"]["name"]
+        model = obj["vehicleAnnotation"]["attributes"]["system"]["model"]["name"]
+        color = obj["vehicleAnnotation"]["attributes"]["system"]["color"]["name"]
+    if "licenseplate" in obj["vehicleAnnotation"]:
+        plate = obj["vehicleAnnotation"]["licenseplate"]["attributes"]["system"]["string"]["name"]
+
+    vehicles_detected = ("Detected: %s %s %s %s" % (color, make, model, plate))
+    print(vehicles_detected)
+
+    current_data = {
+        'make': (make),
+        'model': (model),
+        'color': (color)
+    }
+print(make)
+
+
+
+if __name__ == "__main__":
+
+
+    # creating thread
+    t1 = threading.Thread(target=process_aws, args=(10,))
+    t2 = threading.Thread(target=process_sighthound, args=(10,))
+
+    # Start
+    t1.start()
+    t2.start()
+
+    # Wait
+    t1.join()
+    t2.join()
+
+    final = ("%s %s" % (vehicles_detected, people_detected))
+
+    # both complete
+    print("Done!")
+    tts = gTTS(text=final, lang='en')
+    tts.save("detected.mp3")
+    os.system("detected.mp3")
